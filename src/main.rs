@@ -13,6 +13,8 @@ use std::path::Path;
 use std::io::prelude::*;
 use std::{thread, time};
 
+use std::env;
+
 //todo: delete old textinput element when new image being displayed. also make video work. 
 
 #[derive(Default, NwgUi)]
@@ -147,6 +149,45 @@ impl App {
                     self.frame.set_text(&frame);
                 }
             }
+        }
+    }
+
+    fn check_for_args(&self) {
+        let args: Vec<String> = env::args().collect();
+        if args.len() == 1 {
+          let file_name = &args[1];
+          //open the file
+          let file_extension = Path::new(&file_name).extension().unwrap().to_str().unwrap();
+          let file_contents = fs::read_to_string(&file_name).expect("Something went wrong reading the file");
+          let mut file_lines: Vec<&str> = file_contents.lines().collect();
+          let metadata = file_lines[0];
+          let metadata: Vec<&str> = metadata.split("|").collect();
+          file_lines.remove(0);
+          if file_extension == "agif" {
+              let image = file_lines.join("\r\n");
+              //display image with small font? disable copy paste
+              //iterate through metadata and display relevant info
+              //nwg::TextBox::builder().size((100,100)).readonly(true).text(&image).parent(&self.window).build(&mut display_box).expect("Failed to build textbox");
+              //self.layout.add_child(0, 1, &display_box);
+              self.frame.set_text(&image);
+              self.title.set_text(metadata[0]);
+              self.title.set_readonly(true);
+              self.author.set_text(metadata[1]);
+              self.author.set_readonly(true);
+              self.timestamp.set_text(metadata[2]);
+              self.timestamp.set_readonly(true);
+          }
+          else if file_extension == "agvf" {
+              let video = file_lines.join("\r\n");
+              //metadata format: title,author,timestamp,fps
+              let fps: u64 = metadata[2].parse().unwrap();
+              let wait_duration = 1000/fps;
+              let frames: Vec<&str> = video.split("===").collect();
+              for frame in frames {
+                  thread::sleep(time::Duration::from_millis(wait_duration));
+                  self.frame.set_text(&frame);
+              }
+          }
         }
     }
 }
