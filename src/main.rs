@@ -1,3 +1,4 @@
+#![windows_subsystem = "windows"] 
 #![cfg(windows)]
 
 extern crate native_windows_gui as nwg;
